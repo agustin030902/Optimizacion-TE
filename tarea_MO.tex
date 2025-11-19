@@ -1,0 +1,135 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\setlength{\parskip}{1em}
+\setlength{\parindent}{0em}
+
+\begin{document}
+
+\title{Análisis y Minimización de la función $f(x,y)=\dfrac{\arctan(x^2+y^2)}{1+x^2}$}
+\author{[Agustin A.  Carbajal Romero] \\ Grupo: [C-312]}
+\date{\today}
+\maketitle
+
+\section*{1. Modelo a analizar}
+
+Se considera la función
+\[
+f(x,y) = \frac{\arctan(x^2 + y^2)}{1 + x^2},
+\]
+la cual se definirá y evaluará en el dominio $[-100,100]^2$ para ambas variables, con el objetivo de hallar su mínimo global.
+
+El problema es \textbf{continuo}, \textbf{irrestricto} y de \textbf{dos variables reales}. Se busca minimizar $f(x,y)$ empleando algoritmos de optimización sin restricciones.
+
+---
+
+\section*{2. Análisis teórico del modelo}
+
+\textbf{a) Existencia de solución.}  
+La función $f(x,y)$ es continua en todo $\mathbb{R}^2$ y, dado que el dominio considerado $[-100,100]^2$ es cerrado y acotado, por el teorema de Weierstrass existe al menos un punto donde $f$ alcanza su mínimo.
+
+\textbf{b) Tipo de variables.}  
+Las variables $x$ e $y$ son continuas y reales.
+
+\textbf{c) Gradiente.}  
+Sea $r^2 = x^2 + y^2$. El gradiente de $f$ se obtiene mediante la regla del cociente:
+
+\[
+\nabla f(x,y) =
+\left(
+\frac{2x\big((1+x^2)/(1+(x^2+y^2)^2) - \arctan(x^2+y^2)\big)}{(1+x^2)^2},
+\;
+\frac{2y}{(1+x^2)(1+(x^2+y^2)^2)}
+\right).
+\]
+
+\textbf{d) Hessiana.}  
+El cálculo analítico completo del Hessiano resulta extenso, por lo cual se aproxima mediante diferencias finitas centrales. Numéricamente, se observa que no es definida positiva en todo el dominio, por tanto $f$ no es convexa globalmente.
+
+\textbf{e) Condiciones de óptimo.}  
+Resolviendo $\nabla f(x,y)=0$ se obtiene:
+\[
+x = 0, \quad y = 0.
+\]
+El punto $(0,0)$ cumple las condiciones necesarias de primer orden y, verificando el signo local de $f$, se observa que:
+\[
+f(0,0) = 0, \quad f(x,y) > 0 \ \forall (x,y)\neq (0,0),
+\]
+por lo cual $(0,0)$ es un \textbf{mínimo global} de la función.
+
+---
+
+\section*{3. Características de la función}
+
+- Para valores grandes de $|x|$, el denominador $1+x^2$ hace que $f(x,y)\to 0$, generando zonas planas donde el gradiente se hace muy pequeño.  
+- En las cercanías del origen, la función es suave y simétrica, lo que favorece la convergencia de métodos locales.
+- No existen máximos ni mínimos locales adicionales; la superficie es monomodal.
+
+---
+
+\section*{4. Algoritmos utilizados}
+
+Se emplearon dos algoritmos de optimización irrestricta adecuados para funciones suaves:
+
+\subsection*{4.1. Método del Gradiente con búsqueda de Armijo}
+
+El método de máximo descenso (o gradiente descendente) actualiza iterativamente
+\[
+x_{k+1} = x_k - \alpha_k \nabla f(x_k),
+\]
+donde $\alpha_k$ es un tamaño de paso obtenido mediante la \textbf{regla de Armijo}:
+\[
+f(x_k - \alpha_k \nabla f(x_k)) \le f(x_k) - c\,\alpha_k \|\nabla f(x_k)\|^2, \quad 0<c<1.
+\]
+
+Esta regla garantiza una disminución suficiente del valor de la función y evita pasos demasiado grandes.  
+El algoritmo es sencillo de implementar, aunque su convergencia es lineal, su comportamiento es confiable incluso lejos del óptimo.  
+Para esta función, el gradiente es bien definido ya que la funcion es diferenciable y esta acotada inferiormente.  
+Tambien en zonas donde el gradiente es pequeño (por ejemplo, cuando |x| es grande y el denominador domina), un criterio adaptativo de paso como el de Armijo evita que el método se “congele” o diverja, ajustando automáticamente la magnitud del paso,  por lo que el método de Armijo resulta particularmente eficaz.
+Sin embargo al estar mas cerca del minimo es lento y realiza muchas mas iteraciones.
+
+\subsection*{4.2. Método de Newton con Hessiano numérico regularizado}
+
+El método de Newton utiliza una aproximación cuadrática local de la función:
+\[
+x_{k+1} = x_k - H_f(x_k)^{-1}\nabla f(x_k),
+\]
+donde $H_f(x_k)$ es la matriz Hessiana.  
+En la práctica se calcula mediante diferencias finitas, y se regulariza añadiendo un término $\lambda I$ cuando el Hessiano no es definido positivo, de modo que la dirección de descenso sea válida.
+
+Este método presenta convergencia cuadrática cerca del óptimo, siendo mucho más rápido que el gradiente con Armijo cuando se parte de una región cercana a $(0,0)$, ademas de reducir en aproximadamente al cuadrado el error en cada iteracion.
+Usa tambien informacion de la curvatura, lo que da pasos mas precisos.
+Sin embargo, puede divergir si se inicia en zonas donde el Hessiano está mal condicionado.  
+
+
+\section*{5. Resultados y comparación (resumen teórico)}
+
+A partir de los experimentos computacionales realizados en el notebook (no mostrados aquí), se observaron los siguientes comportamientos generales:
+
+- El método de Gradiente con Armijo converge de manera estable desde cualquier punto inicial en el dominio $[-100,100]^2$, aunque requiere más iteraciones (del orden de cientos) debido a zonas planas cuando $|x|$ es grande.  
+El método de Newton converge en muy pocas iteraciones (menos de 10) cuando el punto inicial no está demasiado alejado del origen, mostrando un comportamiento cuadrático típico.  
+En todos los casos se obtuvo el mismo punto de mínimo: $(x^*,y^*)=(0,0)$ con $f(x^*,y^*)=0$.
+
+---
+
+\section*{6. Conclusiones}
+
+- El problema planteado es un caso de optimización irrestricta con variables continuas, diferenciable y con mínimo global en $(0,0)$.   
+El Gradiente con Armijo ofrece simplicidad y estabilidad globablemente, ya que siempre converge hacia un minimo local bajo condiciones suaves.
+El Método de Newton logra una convergencia más rápida en entornos cercanos al óptimo. 
+Una buena estrategia de practica seria usar el metodo del Gradiente con Armijo para acercarte a una buena region del minimo y luego cambiar a Newton regularizado para refinar la solucion con precision y rapidez que nos ofrece Newton.
+En ambos casos, el resultado obtenido coincide con el análisis teórico del modelo.  
+
+---
+
+\section*{7. Repositorio y desarrollo computacional}
+
+El desarrollo práctico, incluyendo los gráficos, trayectorias y comparaciones de rendimiento, se encuentra implementado en el notebook de Jupyter correspondiente, disponible en el repositorio:
+
+\textbf{\url{https://github.com/agustin030902/Tarea-Evaluativa-Optimizacion.git}}
+
+\end{document}
